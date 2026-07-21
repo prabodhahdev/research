@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
-import { Briefcase, Search, Upload, MessageSquare, Star } from "lucide-react";
+import { Briefcase, Search, Upload, MessageSquare, Star, BookOpen, Home } from "lucide-react";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,7 +12,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "SL Jobs AI — AI-Powered Job Platform for Sri Lanka",
   description:
-    "AI-powered job aggregation and recommendation system for Sri Lankan job seekers",
+    "Research dataset and hybrid NLP recommendation system for Sri Lankan job seekers",
 };
 
 export default function RootLayout({
@@ -22,32 +22,39 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="bg-[#F3F2EF] text-slate-800 font-sans antialiased">
+      {/* Extensions (e.g. grammar checkers) may inject `data-*` attributes before React hydrates,
+          which otherwise triggers hydration mismatch warnings on the `<body>` element. */}
+      <body
+        suppressHydrationWarning
+        className="min-h-screen flex flex-col bg-[#F3F2EF] text-slate-800 font-sans antialiased"
+      >
 
         {/* ── NAVBAR ─────────────────────────────────────── */}
         <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-          <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-0 h-14">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-0 h-16">
 
             {/* Logo */}
             <Link
               href="/"
-              className="flex items-center gap-2 group"
+              className="flex items-center gap-2.5 group"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded bg-[#0A66C2]">
-                <Briefcase size={16} className="text-white" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0A66C2]">
+                <Briefcase size={18} className="text-white" />
               </div>
-              <span className="text-base font-bold text-[#0A66C2] tracking-tight">
+              <span className="text-xl font-bold text-[#0A66C2] tracking-tight">
                 SL Jobs AI
               </span>
             </Link>
 
             {/* Nav links */}
-            <nav className="flex items-center h-14">
+            <nav className="flex items-center h-16">
               {[
-                { href: "/jobs", label: "Jobs", icon: <Search size={16} /> },
-                { href: "/upload-cv", label: "Upload CV", icon: <Upload size={16} /> },
-                { href: "/recommendations", label: "Recommendations", icon: <Star size={16} /> },
-                { href: "/chat", label: "Chat", icon: <MessageSquare size={16} /> },
+                { href: "/", label: "Home", icon: <Home size={18} /> },
+                { href: "/jobs", label: "Jobs", icon: <Search size={18} /> },
+                { href: "/upload-cv", label: "Upload CV", icon: <Upload size={18} /> },
+                { href: "/recommendations", label: "Recommendations", icon: <Star size={18} /> },
+                { href: "/chat", label: "Chat", icon: <MessageSquare size={18} /> },
+                { href: "/research", label: "Research", icon: <BookOpen size={18} /> },
               ].map((item) => (
                 <Link
                   key={item.href}
@@ -55,19 +62,19 @@ export default function RootLayout({
                   className="relative flex flex-col items-center justify-center gap-1 px-4 h-full text-slate-500 hover:text-[#0A66C2] transition-colors duration-150 group"
                 >
                   {item.icon}
-                  <span className="text-xs font-medium">{item.label}</span>
+                  <span className="text-sm font-medium">{item.label}</span>
                   {/* bottom active indicator */}
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0A66C2] scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center rounded-t" />
                 </Link>
               ))}
 
               {/* CTA button */}
-              <div className="ml-3 pl-3 border-l border-slate-200 flex items-center h-8">
+              <div className="ml-3 pl-3 border-l border-slate-200 flex items-center h-9">
                 <Link
                   href="/upload-cv"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#004182] transition-colors duration-200"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004182] transition-colors duration-200"
                 >
-                  <Upload size={12} />
+                  <Upload size={14} />
                   Upload CV
                 </Link>
               </div>
@@ -77,7 +84,7 @@ export default function RootLayout({
         </header>
 
         {/* ── PAGE CONTENT ───────────────────────────────── */}
-        <div className="min-h-screen">
+        <div className="flex-1">
           {children}
         </div>
 
@@ -90,38 +97,40 @@ export default function RootLayout({
 
               {/* brand */}
               <div className="max-w-xs">
-                <Link href="/" className="flex items-center gap-2 mb-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded bg-[#0A66C2]">
-                    <Briefcase size={16} className="text-white" />
+                <Link href="/" className="flex items-center gap-2.5 mb-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0A66C2]">
+                    <Briefcase size={18} className="text-white" />
                   </div>
-                  <span className="text-base font-bold text-[#0A66C2]">
+                  <span className="text-xl font-bold text-[#0A66C2]">
                     SL Jobs AI
                   </span>
                 </Link>
-                <p className="text-xs leading-5 text-slate-500">
-                  An AI-powered job aggregation and recommendation system built
-                  exclusively for Sri Lankan job seekers. BSc Research Project —
-                  Sabaragamuwa University of Sri Lanka.
+                <p className="text-sm leading-6 text-slate-500">
+                  A research dataset, rule-based parser, and hybrid NLP
+                  recommendation system built exclusively for Sri Lankan job
+                  seekers. BSc Honours in Software Engineering — Sabaragamuwa
+                  University of Sri Lanka.
                 </p>
               </div>
 
               {/* links */}
               <div className="flex flex-wrap gap-10">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                  <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">
                     Platform
                   </h4>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2.5">
                     {[
                       { href: "/jobs", label: "Browse Jobs" },
                       { href: "/upload-cv", label: "Upload CV" },
                       { href: "/recommendations", label: "Recommendations" },
                       { href: "/chat", label: "Career Chat" },
+                      { href: "/research", label: "About Research" },
                     ].map((link) => (
                       <li key={link.href}>
                         <Link
                           href={link.href}
-                          className="text-xs text-slate-500 hover:text-[#0A66C2] transition-colors"
+                          className="text-sm text-slate-500 hover:text-[#0A66C2] transition-colors"
                         >
                           {link.label}
                         </Link>
@@ -131,37 +140,36 @@ export default function RootLayout({
                 </div>
 
                 <div>
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
-                    Job Portals
+                  <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">
+                    Platform Model
                   </h4>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2.5">
                     {[
-                      "TopJobs.lk",
-                      "ikmanJOBS",
-                      "XpressJobs",
-                      "CareerFirst.lk",
-                      "Adzuna",
-                    ].map((portal) => (
-                      <li key={portal}>
-                        <span className="text-xs text-slate-500">{portal}</span>
+                      "Imported research dataset",
+                      "Rule-based research parser",
+                      "Hybrid NLP recommendations",
+                      "Explainable skill matching",
+                    ].map((item) => (
+                      <li key={item}>
+                        <span className="text-sm text-slate-500">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 <div>
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
+                  <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">
                     Research
                   </h4>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2.5">
                     {[
                       "SUSL Faculty of Computing",
-                      "Dept. of Computing & IS",
+                      "Dept. of Software Engineering",
                       "SE 8101 Research Project",
-                      "BSc Honours Degree",
+                      "BSc Hons in Software Engineering",
                     ].map((item) => (
                       <li key={item}>
-                        <span className="text-xs text-slate-500">{item}</span>
+                        <span className="text-sm text-slate-500">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -171,15 +179,15 @@ export default function RootLayout({
 
             {/* divider */}
             <div className="mt-8 border-t border-slate-100 pt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <p className="text-xs text-slate-400">
+              <p className="text-sm text-slate-400">
                 © 2025 SL Jobs AI — D.P.P.H.N. Thotillagolla · 20APSE4868
               </p>
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-600">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                  Powered by Gemini AI
+                  Hybrid NLP model
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-500">
                   Research Prototype
                 </span>
               </div>

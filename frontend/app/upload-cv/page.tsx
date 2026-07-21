@@ -3,7 +3,7 @@ import { Upload, Sparkles, FileText, CheckCircle } from "lucide-react";
 
 export default function UploadCvPage() {
   return (
-    <main className="min-h-screen bg-[#F3F2EF]">
+    <main className="bg-[#F3F2EF]">
       <div className="mx-auto max-w-6xl px-4 py-8">
 
         {/* Page header */}
@@ -12,8 +12,8 @@ export default function UploadCvPage() {
             Upload Your CV
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Upload your PDF CV and let our AI find the best matching
-            Sri Lankan jobs for your skills
+            Upload your PDF or DOCX CV and let the hybrid NLP recommendation model
+            find the best matching Sri Lankan jobs for your skills
           </p>
         </div>
 
@@ -31,17 +31,17 @@ export default function UploadCvPage() {
                   {
                     icon: <Upload size={16} className="text-[#0A66C2]" />,
                     title: "Upload your CV",
-                    desc: "Select your PDF CV file from your device",
+                    desc: "Select your PDF or DOCX CV file from your device",
                   },
                   {
                     icon: <FileText size={16} className="text-[#0A66C2]" />,
-                    title: "AI reads your skills",
-                    desc: "Gemini AI extracts your skills, experience and qualifications",
+                    title: "Research parser reads your skills",
+                    desc: "A rule-based research parser extracts your skills, experience and qualifications",
                   },
                   {
                     icon: <Sparkles size={16} className="text-[#0A66C2]" />,
                     title: "Get matched jobs",
-                    desc: "Top matching Sri Lankan jobs ranked by how well they fit your profile",
+                    desc: "Top jobs from the imported research dataset are ranked by how well they fit your profile",
                   },
                 ].map((step, i) => (
                   <div key={i} className="flex gap-3">
@@ -49,10 +49,10 @@ export default function UploadCvPage() {
                       {step.icon}
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-800">
+                      <p className="text-sm font-semibold text-slate-800">
                         {step.title}
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5 leading-5">
+                      <p className="text-sm text-slate-500 mt-0.5 leading-5">
                         {step.desc}
                       </p>
                     </div>
@@ -63,7 +63,7 @@ export default function UploadCvPage() {
 
             {/* Tips card */}
             <div className="rounded-xl border border-blue-100 bg-blue-50 p-5">
-              <h3 className="text-xs font-bold text-blue-800 mb-3 uppercase tracking-wider">
+              <h3 className="text-sm font-bold text-blue-800 mb-3 uppercase tracking-wider">
                 Tips for best results
               </h3>
               <ul className="space-y-2">
@@ -76,7 +76,7 @@ export default function UploadCvPage() {
                 ].map((tip) => (
                   <li
                     key={tip}
-                    className="flex items-start gap-2 text-xs text-blue-700"
+                    className="flex items-start gap-2 text-sm text-blue-700"
                   >
                     <CheckCircle
                       size={12}

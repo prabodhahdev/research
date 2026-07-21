@@ -24,18 +24,27 @@ export default function ChatBox() {
     {
       role: "assistant",
       content:
-        "Hi! I'm your Sri Lankan career assistant powered by Gemini AI. I can help you find jobs, explore career paths, and give advice on skills.\n\nTry asking me something like:\n• Find IT jobs in Colombo\n• What skills do I need for marketing?\n• Best paying jobs in Sri Lanka",
+        "Hi! I'm your Sri Lankan career assistant using the imported research dataset and hybrid NLP recommendation model. I can help you find jobs, explore career paths, and give advice on skills.\n\nTry asking me something like:\n• Find IT jobs in Colombo\n• What skills do I need for marketing?\n• Best paying jobs in Sri Lanka",
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const didMountRef = useRef(false);
 
-  // auto scroll to bottom on new message
+  // Keep scroll inside the chat panel — do not scroll the whole page.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    const panel = messagesRef.current;
+    if (panel) {
+      panel.scrollTop = panel.scrollHeight;
+    }
   }, [messages, loading]);
 
   async function onSend(text?: string) {
@@ -96,8 +105,8 @@ export default function ChatBox() {
           </p>
           <div className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs text-blue-100">
-              Online — Powered by Gemini AI
+            <span className="text-sm text-blue-100">
+              Online
             </span>
           </div>
         </div>
@@ -107,13 +116,15 @@ export default function ChatBox() {
       </div>
 
       {/* ── MESSAGES AREA ────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-[#F3F2EF]">
+      <div
+        ref={messagesRef}
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-[#F3F2EF]"
+      >
         {messages.map((m, idx) => (
           <div
             key={`${m.role}-${idx}`}
-            className={`flex items-end gap-2 ${
-              m.role === "user" ? "justify-end" : "justify-start"
-            }`}
+            className={`flex items-end gap-2 ${m.role === "user" ? "justify-end" : "justify-start"
+              }`}
           >
             {/* AI avatar */}
             {m.role === "assistant" && (
@@ -124,42 +135,41 @@ export default function ChatBox() {
 
             {/* Message bubble */}
             <div
-              className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${
-                m.role === "user"
+              className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm ${m.role === "user"
                   ? "rounded-br-sm bg-[#0A66C2] text-white"
                   : "rounded-bl-sm bg-white text-slate-800 border border-slate-100"
-              }`}
+                }`}
             >
               <p className="whitespace-pre-wrap">{m.content}</p>
 
               {/* Related jobs if any */}
               {m.related_jobs && m.related_jobs.length > 0 && (
                 <div className="mt-3 space-y-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
                     Related Jobs
                   </p>
                   {m.related_jobs.slice(0, 3).map((job, i) => (
-  <a
-    key={i}
-    href={job.url}
-    target="_blank"
-    rel="noreferrer"
-    className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5 hover:border-blue-200 hover:bg-blue-50 transition-colors"
-  >
-    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xs font-bold text-[#0A66C2]">
-      {job.company?.charAt(0) ?? "J"}
-    </div>
+                    <a
+                      key={i}
+                      href={job.url ?? "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5 hover:border-blue-200 hover:bg-blue-50 transition-colors"
+                    >
+                      <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 text-sm font-bold text-[#0A66C2]">
+                        {job.company?.charAt(0) ?? "J"}
+                      </div>
 
-    <div>
-      <p className="text-xs font-semibold text-slate-800">
-        {job.title}
-      </p>
-      <p className="text-xs text-slate-500">
-        {job.company} · {job.location}
-      </p>
-    </div>
-  </a>
-))}
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">
+                          {job.title}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          {job.company} · {job.location}
+                        </p>
+                      </div>
+                    </a>
+                  ))}
                 </div>
               )}
             </div>
@@ -188,8 +198,6 @@ export default function ChatBox() {
             </div>
           </div>
         )}
-
-        <div ref={bottomRef} />
       </div>
 
       {/* ── SUGGESTIONS ──────────────────────────── */}
@@ -200,7 +208,7 @@ export default function ChatBox() {
               <button
                 key={s}
                 onClick={() => onSend(s)}
-                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-[#0A66C2] transition-colors"
+                className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-medium text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-[#0A66C2] transition-colors"
               >
                 {s}
               </button>
@@ -212,7 +220,7 @@ export default function ChatBox() {
       {/* ── ERROR ────────────────────────────────── */}
       {error && (
         <div className="border-t border-red-100 bg-red-50 px-4 py-2">
-          <p className="flex items-center gap-1.5 text-xs text-red-600">
+          <p className="flex items-center gap-1.5 text-sm text-red-600">
             <AlertCircle size={12} />
             {error}
           </p>
@@ -243,8 +251,8 @@ export default function ChatBox() {
             )}
           </button>
         </div>
-        <p className="mt-1.5 text-center text-xs text-slate-400">
-          Press Enter to send · Powered by Gemini AI
+        <p className="mt-1.5 text-center text-sm text-slate-400">
+          Press Enter to send · Uses imported research dataset
         </p>
       </div>
 

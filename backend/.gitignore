@@ -1,0 +1,9 @@
+.env
+.sl_jobs_ai.db-journal
+__pycache__/
+*.pyc
+uploads/
+# Large trained artifacts (copy from Colab into data/models/)
+data/vectors/
+*.pkl
+!data/models/.gitkeep

@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { uploadCv } from "@/lib/api";
+import { saveCvRecommendationsToSession } from "@/lib/recommendationsStorage";
 import type {
   CvUploadResponse,
   JobRecommendation,
 } from "@/types/recommendation";
-import JobCard from "./JobCard";
+import RecommendationList from "./RecommendationList";
 import {
   Upload,
   FileText,
@@ -14,16 +17,18 @@ import {
   Loader2,
   AlertCircle,
   Sparkles,
-  CheckCircle2,
-  XCircle,
-  Trophy,
+  ArrowRight,
 } from "lucide-react";
+
+/** First-screen preview on Upload CV; full list on /recommendations via Load more */
+const UPLOAD_PREVIEW_LIMIT = 8;
 
 export default function CvUploadForm({
   onRecommendations,
 }: {
   onRecommendations?: (data: CvUploadResponse) => void;
 }) {
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,8 +37,19 @@ export default function CvUploadForm({
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleFile(f: File | null) {
-    if (f && f.type !== "application/pdf") {
-      setError("Only PDF files are supported.");
+    if (!f) {
+      setFile(null);
+      return;
+    }
+    const name = f.name.toLowerCase();
+    const okType =
+      f.type === "application/pdf" ||
+      f.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      name.endsWith(".pdf") ||
+      name.endsWith(".docx");
+    if (!okType) {
+      setError("Only PDF and DOCX files are supported.");
       return;
     }
     setFile(f);
@@ -51,13 +67,20 @@ export default function CvUploadForm({
     e.preventDefault();
     setError(null);
     if (!file) {
-      setError("Please choose a PDF CV file first.");
+      setError("Please choose a PDF or DOCX CV file first.");
       return;
     }
     setLoading(true);
     try {
       const data = await uploadCv(file);
       setRecommendations(data.recommendations);
+      saveCvRecommendationsToSession({
+        v: 1,
+        skills: data.skills ?? [],
+        recommendations: data.recommendations,
+        jobsConsidered: data.jobs_considered ?? 0,
+        savedAt: new Date().toISOString(),
+      });
       onRecommendations?.(data);
     } catch (err) {
       setError(
@@ -68,29 +91,13 @@ export default function CvUploadForm({
     }
   }
 
-  // score color
-  function scoreColor(score: number) {
-    if (score >= 0.75) return "text-green-600 bg-green-50 border-green-200";
-    if (score >= 0.5) return "text-blue-600 bg-blue-50 border-blue-200";
-    if (score >= 0.3) return "text-amber-600 bg-amber-50 border-amber-200";
-    return "text-slate-500 bg-slate-50 border-slate-200";
-  }
-
-  // score label
-  function scoreLabel(score: number) {
-    if (score >= 0.75) return "Excellent Match";
-    if (score >= 0.5) return "Good Match";
-    if (score >= 0.3) return "Partial Match";
-    return "Low Match";
-  }
-
   return (
     <div className="space-y-4">
 
       {/* Upload card */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
-        <h2 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <Upload size={15} className="text-[#0A66C2]" />
+        <h2 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <Upload size={17} className="text-[#0A66C2]" />
           Upload Your CV
         </h2>
 
@@ -116,7 +123,7 @@ export default function CvUploadForm({
             <input
               ref={inputRef}
               type="file"
-              accept="application/pdf"
+              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               className="hidden"
               onChange={(e) =>
                 handleFile(e.target.files?.[0] ?? null)
@@ -131,7 +138,7 @@ export default function CvUploadForm({
                 <p className="text-sm font-semibold text-green-700">
                   {file.name}
                 </p>
-                <p className="text-xs text-green-500 mt-1">
+                <p className="text-sm text-green-500 mt-1">
                   {(file.size / 1024).toFixed(1)} KB — Ready to upload
                 </p>
                 <button
@@ -140,7 +147,7 @@ export default function CvUploadForm({
                     e.stopPropagation();
                     setFile(null);
                   }}
-                  className="mt-3 inline-flex items-center gap-1 text-xs text-slate-500 hover:text-red-500 transition-colors"
+                  className="mt-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-red-500 transition-colors"
                 >
                   <X size={12} />
                   Remove file
@@ -154,12 +161,12 @@ export default function CvUploadForm({
                 <p className="text-sm font-semibold text-slate-700">
                   Drag and drop your CV here
                 </p>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-sm text-slate-400 mt-1">
                   or click to browse files
                 </p>
-                <p className="mt-3 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-500">
+                <p className="mt-3 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-500">
                   <FileText size={11} />
-                  PDF files only
+                  PDF or DOCX files
                 </p>
               </>
             )}
@@ -167,7 +174,7 @@ export default function CvUploadForm({
 
           {/* Error */}
           {error && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+            <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               <AlertCircle size={14} className="flex-shrink-0" />
               {error}
             </div>
@@ -187,7 +194,7 @@ export default function CvUploadForm({
             ) : (
               <>
                 <Sparkles size={16} />
-                Get AI Job Recommendations
+                Get Hybrid NLP Recommendations
               </>
             )}
           </button>
@@ -204,127 +211,51 @@ export default function CvUploadForm({
           <p className="text-sm font-semibold text-blue-800">
             Analyzing your CV...
           </p>
-          <p className="text-xs text-blue-500 mt-1">
-            Gemini AI is reading your skills and finding the best matches
+          <p className="text-sm text-blue-500 mt-1">
+            The rule-based research parser is reading your skills while the hybrid NLP model ranks matches from the imported research dataset
           </p>
         </div>
       )}
 
       {/* Recommendations */}
-      {!loading && recommendations.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
+      {!loading && recommendations.length > 0 && (() => {
+        const total = recommendations.length;
+        const preview = recommendations.slice(0, UPLOAD_PREVIEW_LIMIT);
+        const hasMore = total > UPLOAD_PREVIEW_LIMIT;
+        const listSubtitle =
+          hasMore
+            ? `Showing ${preview.length} of ${total} top matches`
+            : `${total} job${total === 1 ? "" : "s"} matched based on your CV`;
 
-          {/* Results header */}
-          <div className="flex items-center gap-2 mb-5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
-              <Trophy size={16} className="text-[#0A66C2]" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Your Top Job Matches
-              </h3>
-              <p className="text-xs text-slate-500">
-                {recommendations.length} jobs matched based on your CV
-              </p>
-            </div>
-          </div>
-
-          {/* Each recommendation */}
-          <div className="space-y-5">
-            {recommendations.map((r, idx) => (
-              <div
-                key={`${r.job.title}-${idx}`}
-                className="rounded-xl border border-slate-100 p-4 bg-slate-50"
+        return (
+          <div className="space-y-3">
+            <RecommendationList
+              recommendations={preview}
+              subtitle={listSubtitle}
+            />
+            {hasMore && (
+              <button
+                type="button"
+                onClick={() => router.push("/recommendations")}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-[#0A66C2] shadow-sm transition hover:bg-slate-50 hover:border-slate-300"
               >
-                {/* Match score bar */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-500">
-                      #{idx + 1}
-                    </span>
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${scoreColor(r.match_score)}`}
-                    >
-                      {scoreLabel(r.match_score)} —{" "}
-                      {(r.match_score * 100).toFixed(0)}%
-                    </span>
-                  </div>
-
-                  {/* Score progress bar */}
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 rounded-full bg-slate-200 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-[#0A66C2] transition-all duration-500"
-                        style={{
-                          width: `${Math.min(r.match_score * 100, 100)}%`,
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-slate-600">
-                      {(r.match_score * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
-
-                {/* Job card */}
-                <JobCard job={r.job} />
-
-                {/* Skills section */}
-                <div className="mt-3 grid sm:grid-cols-2 gap-3">
-
-                  {/* Matched skills */}
-                  <div className="rounded-lg border border-green-100 bg-green-50 p-3">
-                    <p className="flex items-center gap-1.5 text-xs font-bold text-green-700 mb-2">
-                      <CheckCircle2 size={12} />
-                      Matched Skills
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {r.matched_skills.length > 0 ? (
-                        r.matched_skills.slice(0, 6).map((skill) => (
-                          <span
-                            key={skill}
-                            className="rounded-full bg-green-100 border border-green-200 px-2 py-0.5 text-xs font-medium text-green-700"
-                          >
-                            {skill}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-green-600">
-                          N/A
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Missing skills */}
-                  <div className="rounded-lg border border-red-100 bg-red-50 p-3">
-                    <p className="flex items-center gap-1.5 text-xs font-bold text-red-700 mb-2">
-                      <XCircle size={12} />
-                      Skills to Improve
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {r.missing_skills.length > 0 ? (
-                        r.missing_skills.slice(0, 6).map((skill) => (
-                          <span
-                            key={skill}
-                            className="rounded-full bg-red-100 border border-red-200 px-2 py-0.5 text-xs font-medium text-red-700"
-                          >
-                            {skill}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-red-600">
-                          None — great fit!
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                Load more ({total - preview.length} more on Recommendations)
+                <ArrowRight size={16} />
+              </button>
+            )}
+            <p className="text-sm text-slate-500 text-center">
+              Saved to this browser — open{" "}
+              <Link
+                href="/recommendations"
+                className="font-semibold text-[#0A66C2] hover:underline"
+              >
+                Recommendations
+              </Link>{" "}
+              for the full list anytime.
+            </p>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

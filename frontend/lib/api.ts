@@ -4,7 +4,8 @@ import type { CvUploadResponse } from "@/types/recommendation";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  "http://localhost:8000";
+  // Flask backend defaults to port 5000.
+  "http://localhost:5000";
 
 async function apiJson<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -37,14 +38,14 @@ export async function searchJobs(params: {
   qp.set("page", String(params.page ?? 1));
   qp.set("page_size", String(params.pageSize ?? 20));
 
-  return apiJson(`/jobs/search?${qp.toString()}`);
+  return apiJson(`/api/jobs/search?${qp.toString()}`);
 }
 
 export async function uploadCv(file: File): Promise<CvUploadResponse> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${API_BASE_URL}/cv/upload`, {
+  const res = await fetch(`${API_BASE_URL}/api/upload/cv/upload`, {
     method: "POST",
     body: formData,
   });
@@ -58,7 +59,7 @@ export async function uploadCv(file: File): Promise<CvUploadResponse> {
 }
 
 export async function sendChatMessage(message: string): Promise<ChatResponse> {
-  return apiJson(`/chat`, {
+  return apiJson(`/api/chat/`, {
     method: "POST",
     body: JSON.stringify({ message }),
   });

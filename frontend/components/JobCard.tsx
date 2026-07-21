@@ -12,7 +12,6 @@ export default function JobCard({ job }: { job: Job }) {
     topjobs: "bg-blue-50 text-blue-700 border-blue-200",
     ikman: "bg-orange-50 text-orange-700 border-orange-200",
     xpressjobs: "bg-green-50 text-green-700 border-green-200",
-    adzuna: "bg-purple-50 text-purple-700 border-purple-200",
     careerfirst: "bg-teal-50 text-teal-700 border-teal-200",
   };
 
@@ -38,27 +37,27 @@ export default function JobCard({ job }: { job: Job }) {
           <div className="min-w-0 flex-1">
 
             {/* Title */}
-            <h3 className="text-base font-semibold text-slate-900 leading-tight group-hover:text-[#0A66C2] transition-colors">
+            <h3 className="text-lg font-semibold text-slate-900 leading-snug group-hover:text-[#0A66C2] transition-colors">
               {job.title}
             </h3>
 
             {/* Company */}
-            <div className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
-              <Building2 size={13} className="text-slate-400 flex-shrink-0" />
+            <div className="mt-1.5 flex items-center gap-1.5 text-base text-slate-600">
+              <Building2 size={15} className="text-slate-400 flex-shrink-0" />
               <span className="font-medium">
                 {job.company || "Company not listed"}
               </span>
             </div>
 
             {/* Location + category */}
-            <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+            <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm text-slate-500">
               <span className="flex items-center gap-1">
-                <MapPin size={12} className="text-slate-400" />
+                <MapPin size={14} className="text-slate-400" />
                 {job.location || "Location not listed"}
               </span>
               {job.category && (
                 <span className="flex items-center gap-1">
-                  <Briefcase size={12} className="text-slate-400" />
+                  <Briefcase size={14} className="text-slate-400" />
                   {job.category}
                 </span>
               )}
@@ -66,7 +65,7 @@ export default function JobCard({ job }: { job: Job }) {
 
             {/* Description */}
             {job.description && (
-              <p className="mt-2.5 text-xs leading-5 text-slate-500 line-clamp-2">
+              <p className="mt-3 text-sm leading-6 text-slate-500 line-clamp-2">
                 {job.description.length > 160
                   ? `${job.description.slice(0, 160)}...`
                   : job.description}
@@ -76,7 +75,7 @@ export default function JobCard({ job }: { job: Job }) {
             {/* Source badge */}
             {job.source && (
               <div className="mt-3">
-                <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${badgeClass}`}>
+                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium ${badgeClass}`}>
                   {job.source}
                 </span>
               </div>
@@ -87,14 +86,14 @@ export default function JobCard({ job }: { job: Job }) {
           {/* Right side — apply button */}
           {job.url && (
             <div className="flex-shrink-0 sm:ml-4 mt-2 sm:mt-0">
-              
-                <a href={job.url}  
+              <a
+                href={job.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[#0A66C2] px-4 py-1.5 text-xs font-semibold text-[#0A66C2] transition-all duration-200 hover:bg-[#0A66C2] hover:text-white whitespace-nowrap"
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[#0A66C2] px-5 py-2 text-sm font-semibold text-[#0A66C2] transition-all duration-200 hover:bg-[#0A66C2] hover:text-white whitespace-nowrap"
               >
                 Easy Apply
-                <ExternalLink size={11} />
+                <ExternalLink size={13} />
               </a>
             </div>
           )}
