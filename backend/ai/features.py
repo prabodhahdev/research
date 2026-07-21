@@ -54,7 +54,7 @@ _YEARS_RE = re.compile(r"(\d+)\+?\s*(?:years?|yrs?)", re.I)
 
 _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CACHE_PATH = os.path.join(_BACKEND_DIR, "data", "vectors", "job_sbert_cache.joblib")
-MAX_INDEX_JOBS = int(os.environ.get("MAX_INDEX_JOBS", "1500"))
+MAX_INDEX_JOBS = int(os.environ.get("MAX_INDEX_JOBS", "500"))
 
 
 def normalize_field(value: Optional[str]) -> str:

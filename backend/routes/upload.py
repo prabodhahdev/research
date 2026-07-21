@@ -12,7 +12,7 @@ from database.models import get_jobs
 
 upload_bp = Blueprint("upload", __name__)
 
-RANK_JOB_LIMIT = int(os.environ.get("RANK_JOB_LIMIT", "2500"))
+RANK_JOB_LIMIT = int(os.environ.get("RANK_JOB_LIMIT", "500"))
 ALLOWED_EXTENSIONS = {".pdf", ".docx"}
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 

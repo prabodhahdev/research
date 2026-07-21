@@ -10,6 +10,25 @@ _BACKEND_ROOT = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(_BACKEND_ROOT, ".env"))
 
 
+def _warmup_models() -> None:
+    """Load ML artifacts once at process start (Render cold-start mitigation)."""
+    if os.environ.get("SKIP_WARMUP") == "1":
+        return
+    try:
+        from ai.model_store import load_stacking_models, models_available
+
+        if models_available():
+            print("[warmup] Loading stacking models ...")
+            load_stacking_models()
+        from ai.features import _load_sbert
+
+        print("[warmup] Loading SBERT ...")
+        _load_sbert()
+        print("[warmup] ML stack ready.")
+    except Exception as error:
+        print(f"[WARN] warmup failed: {error}")
+
+
 def create_app():
     app = Flask(__name__)
     CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -64,6 +83,7 @@ def create_app():
 
 
 app = create_app()
+_warmup_models()
 
 
 if __name__ == "__main__":
