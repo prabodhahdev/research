@@ -41,6 +41,14 @@ def _extract_drive_file_id(url: str) -> str | None:
     return match.group(1) if match else None
 
 
+def _is_valid_pickle(path: Path) -> bool:
+    if not path.is_file() or path.stat().st_size < 64:
+        return False
+    with path.open("rb") as handle:
+        header = handle.read(2)
+    return header in (b"\x80\x03", b"\x80\x04", b"\x80\x05")
+
+
 def _download_google_drive(file_id: str, destination: Path) -> None:
     session = requests.Session()
     base_url = "https://docs.google.com/uc?export=download"
@@ -68,9 +76,9 @@ def _download_google_drive(file_id: str, destination: Path) -> None:
             if chunk:
                 handle.write(chunk)
 
-    if destination.stat().st_size < 1024:
+    if not _is_valid_pickle(destination):
         raise RuntimeError(
-            f"Downloaded {destination.name} is too small — "
+            f"Downloaded {destination.name} is not a valid pickle file — "
             "check that the Google Drive link is shared as 'Anyone with the link'."
         )
 
