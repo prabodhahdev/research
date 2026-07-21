@@ -40,7 +40,7 @@ export default function Home() {
             <span className="font-medium text-slate-700">ITPro</span>,{" "}
             <span className="font-medium text-slate-700">Ikman</span> and{" "}
             <span className="font-medium text-slate-700">XpressJobs</span>
-            — upload your CV and let the hybrid model find the best matches.
+            <br /> upload your CV and let the hybrid model find the best matches.
           </p>
 
           {/* buttons */}
