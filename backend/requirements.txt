@@ -12,3 +12,4 @@ xgboost
 sentence-transformers
 rank-bm25
 nltk
+gunicorn
