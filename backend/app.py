@@ -12,18 +12,7 @@ load_dotenv(os.path.join(_BACKEND_ROOT, ".env"))
 
 def create_app():
     app = Flask(__name__)
-    CORS(
-        app,
-        resources={
-            r"/api/*": {
-                "origins": [
-                    r"https://.*\.vercel\.app",
-                    "http://localhost:3000",
-                    "http://127.0.0.1:3000",
-                ]
-            }
-        },
-    )
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     app.config["JSON_SORT_KEYS"] = False
     app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB upload limit

@@ -1,7 +1,5 @@
 from flask import Blueprint, jsonify, request
 
-from ai.cv_parser import parse_cv_text
-from ai.recommender import recommend_jobs_for_skills
 from database.models import get_jobs
 
 
@@ -89,31 +87,15 @@ def search_jobs():
     offset = (page - 1) * page_size
 
     if q:
-        query_profile = parse_cv_text(q)
-        candidate_rows = get_jobs(
-            keyword=None,
+        rows = get_jobs(
+            keyword=q,
             location=location if location else None,
             category=category if category else None,
-            limit=5000,
+            limit=page_size,
+            offset=offset,
             exclude_sources=None if include_manual else ["manual"],
         )
-        try:
-            ranked = recommend_jobs_for_skills(
-                skills=query_profile["skills"],
-                jobs=candidate_rows,
-                cv_text=q,
-                cv_field=query_profile["field"] or category or None,
-                cv_experience=(query_profile.get("experience") or [None])[0],
-                top_k=offset + page_size,
-            )
-        except RuntimeError as error:
-            return jsonify({"error": str(error), "jobs": []}), 503
-        jobs = []
-        for item in ranked[offset : offset + page_size]:
-            job = _job_response(item["job"])
-            job["match_score"] = item["match_score"]
-            job["scores"] = item.get("scores")
-            jobs.append(job)
+        jobs = [_job_response(row) for row in rows]
     else:
         rows = get_jobs(
             keyword=None,

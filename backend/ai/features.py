@@ -54,6 +54,7 @@ _YEARS_RE = re.compile(r"(\d+)\+?\s*(?:years?|yrs?)", re.I)
 
 _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CACHE_PATH = os.path.join(_BACKEND_DIR, "data", "vectors", "job_sbert_cache.joblib")
+MAX_INDEX_JOBS = int(os.environ.get("MAX_INDEX_JOBS", "1500"))
 
 
 def normalize_field(value: Optional[str]) -> str:
@@ -198,7 +199,7 @@ def _load_sbert():
 
 
 class JobRetrievalIndex:
-    """Cached BM25 + SBERT job corpus with hybrid candidate retrieval."""
+    """BM25 corpus index with on-demand SBERT encoding for candidates only."""
 
     def __init__(self) -> None:
         self._job_ids: List[Any] = []
@@ -207,15 +208,17 @@ class JobRetrievalIndex:
         self._bm25: Optional[BM25Okapi] = None
         self._bm25_min = 0.0
         self._bm25_max = 1.0
-        self._job_embeddings: Optional[np.ndarray] = None
         self._signature: Tuple[Any, ...] = ()
+        self._embedding_by_idx: Dict[int, np.ndarray] = {}
 
     def build(self, jobs: List[Dict[str, Any]]) -> None:
+        if len(jobs) > MAX_INDEX_JOBS:
+            jobs = jobs[:MAX_INDEX_JOBS]
+
         signature = tuple(row.get("id") for row in jobs)
-        if signature == self._signature and self._job_embeddings is not None:
+        if signature == self._signature and self._bm25 is not None:
             return
 
-        # Try disk cache first (same job id set).
         if self._try_load_cache(signature):
             return
 
@@ -239,7 +242,6 @@ class JobRetrievalIndex:
 
         if not self._bm25_docs:
             self._bm25 = None
-            self._job_embeddings = None
             self._signature = signature
             return
 
@@ -253,16 +255,6 @@ class JobRetrievalIndex:
             if self._bm25_max <= self._bm25_min:
                 self._bm25_max = self._bm25_min + 1.0
 
-        job_texts = [build_job_document(row) for row in self._job_rows]
-        model = _load_sbert()
-        self._job_embeddings = np.asarray(
-            model.encode(
-                job_texts,
-                batch_size=16,
-                show_progress_bar=False,
-                normalize_embeddings=True,
-            )
-        )
         self._signature = signature
         self._save_cache()
 
@@ -279,7 +271,6 @@ class JobRetrievalIndex:
             self._bm25 = BM25Okapi(self._bm25_docs) if self._bm25_docs else None
             self._bm25_min = float(payload["bm25_min"])
             self._bm25_max = float(payload["bm25_max"])
-            self._job_embeddings = np.asarray(payload["embeddings"])
             self._signature = signature
             return True
         except Exception:
@@ -295,7 +286,6 @@ class JobRetrievalIndex:
                     "bm25_docs": self._bm25_docs,
                     "bm25_min": self._bm25_min,
                     "bm25_max": self._bm25_max,
-                    "embeddings": self._job_embeddings,
                 },
                 _CACHE_PATH,
             )
@@ -318,17 +308,43 @@ class JobRetrievalIndex:
         sbert_k: int = 40,
         bm25_k: int = 40,
     ) -> List[int]:
-        """Hybrid retrieval like research Step 4: SBERT + BM25 (deduped)."""
-        if not self._job_rows or self._job_embeddings is None:
+        """Hybrid retrieval: BM25 pool, then SBERT top-k on that pool only."""
+        if not self._job_rows:
             return []
 
-        sbert_sims = self._job_embeddings @ cv_embedding
-        sbert_top = np.argsort(-sbert_sims)[:sbert_k].tolist()
+        self._embedding_by_idx = {}
 
         bm25_top: List[int] = []
         if self._bm25 is not None and cv_query_tokens:
             bm25_scores = self._bm25.get_scores(cv_query_tokens)
             bm25_top = np.argsort(-np.asarray(bm25_scores))[:bm25_k].tolist()
+
+        pool_size = max(sbert_k * 2, 80)
+        pool: List[int] = []
+        seen_pool = set()
+        for idx in bm25_top[:pool_size]:
+            if idx not in seen_pool:
+                seen_pool.add(idx)
+                pool.append(idx)
+
+        sbert_top: List[int] = []
+        if pool:
+            model = _load_sbert()
+            texts = [build_job_document(self._job_rows[idx]) for idx in pool]
+            job_embeddings = np.asarray(
+                model.encode(
+                    texts,
+                    batch_size=8,
+                    show_progress_bar=False,
+                    normalize_embeddings=True,
+                )
+            )
+            for local_idx, job_idx in enumerate(pool):
+                self._embedding_by_idx[job_idx] = job_embeddings[local_idx]
+
+            sims = job_embeddings @ cv_embedding
+            for local_idx in np.argsort(-sims)[:sbert_k]:
+                sbert_top.append(pool[int(local_idx)])
 
         ordered: List[int] = []
         seen = set()
@@ -363,7 +379,20 @@ class JobRetrievalIndex:
                     build_job_document(row), limit=25
                 )
 
-            sbert_score = float(np.dot(cv_embedding, self._job_embeddings[idx]))
+            job_embedding = self._embedding_by_idx.get(idx)
+            if job_embedding is None:
+                model = _load_sbert()
+                job_embedding = np.asarray(
+                    model.encode(
+                        [build_job_document(row)],
+                        batch_size=1,
+                        show_progress_bar=False,
+                        normalize_embeddings=True,
+                    )[0]
+                )
+                self._embedding_by_idx[idx] = job_embedding
+
+            sbert_score = float(np.dot(cv_embedding, job_embedding))
             bm25_raw = float(bm25_all[idx]) if bm25_all is not None else 0.0
             job_field = row.get("_resolved_field") or resolve_job_field(row)
             job_level = build_job_experience(row)
