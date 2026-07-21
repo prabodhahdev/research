@@ -258,7 +258,7 @@ class JobRetrievalIndex:
         self._job_embeddings = np.asarray(
             model.encode(
                 job_texts,
-                batch_size=64,
+                batch_size=16,
                 show_progress_bar=False,
                 normalize_embeddings=True,
             )

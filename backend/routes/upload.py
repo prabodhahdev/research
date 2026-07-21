@@ -1,3 +1,5 @@
+import os
+import traceback
 from io import BytesIO
 
 from docx import Document
@@ -10,6 +12,7 @@ from database.models import get_jobs
 
 upload_bp = Blueprint("upload", __name__)
 
+RANK_JOB_LIMIT = int(os.environ.get("RANK_JOB_LIMIT", "2500"))
 ALLOWED_EXTENSIONS = {".pdf", ".docx"}
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
@@ -40,41 +43,41 @@ def _extract_docx_text(file_bytes: bytes) -> str:
 
 @upload_bp.post("/cv/upload")
 def upload_cv():
-    file = request.files.get("file")
-    if not file:
-        return jsonify({"error": "Missing file."}), 400
-
-    filename = (file.filename or "").lower()
-    if not any(filename.endswith(ext) for ext in ALLOWED_EXTENSIONS):
-        return jsonify({"error": "Only PDF and DOCX files are supported."}), 400
-
-    file_bytes = file.read()
-    if not file_bytes:
-        return jsonify({"error": "Empty file."}), 400
-
     try:
-        if filename.endswith(".pdf"):
-            cv_text = _extract_pdf_text(file_bytes)
-        else:
-            cv_text = _extract_docx_text(file_bytes)
-    except Exception as e:
-        return jsonify({"error": f"Failed to read file: {e}"}), 400
+        file = request.files.get("file")
+        if not file:
+            return jsonify({"error": "Missing file."}), 400
 
-    if not cv_text:
-        return jsonify({"error": "Could not extract text from the CV."}), 400
+        filename = (file.filename or "").lower()
+        if not any(filename.endswith(ext) for ext in ALLOWED_EXTENSIONS):
+            return jsonify({"error": "Only PDF and DOCX files are supported."}), 400
 
-    cv_profile = parse_cv_text(cv_text)
-    skills = cv_profile["skills"]
-    cv_field = cv_profile["field"]
+        file_bytes = file.read()
+        if not file_bytes:
+            return jsonify({"error": "Empty file."}), 400
 
-    jobs_rows = get_jobs(
-        keyword=None,
-        location=None,
-        limit=5000,
-        exclude_sources=["manual"],
-    )
+        try:
+            if filename.endswith(".pdf"):
+                cv_text = _extract_pdf_text(file_bytes)
+            else:
+                cv_text = _extract_docx_text(file_bytes)
+        except Exception as e:
+            return jsonify({"error": f"Failed to read file: {e}"}), 400
 
-    try:
+        if not cv_text:
+            return jsonify({"error": "Could not extract text from the CV."}), 400
+
+        cv_profile = parse_cv_text(cv_text)
+        skills = cv_profile["skills"]
+        cv_field = cv_profile["field"]
+
+        jobs_rows = get_jobs(
+            keyword=None,
+            location=None,
+            limit=RANK_JOB_LIMIT,
+            exclude_sources=["manual"],
+        )
+
         recommendations = recommend_jobs_for_skills(
             skills=skills,
             jobs=jobs_rows,
@@ -85,6 +88,9 @@ def upload_cv():
         )
     except RuntimeError as error:
         return jsonify({"error": str(error)}), 503
+    except Exception as error:
+        print(f"[upload_cv] {error}\n{traceback.format_exc()}")
+        return jsonify({"error": f"Recommendation failed: {error}"}), 503
 
     return jsonify(
         {

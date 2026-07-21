@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 
 # Load optional local environment variables from the backend folder.
 _BACKEND_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -11,7 +12,18 @@ load_dotenv(os.path.join(_BACKEND_ROOT, ".env"))
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": [
+                    r"https://.*\.vercel\.app",
+                    "http://localhost:3000",
+                    "http://127.0.0.1:3000",
+                ]
+            }
+        },
+    )
 
     app.config["JSON_SORT_KEYS"] = False
     app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB upload limit
@@ -29,6 +41,13 @@ def create_app():
     @app.get("/api/health")
     def health_check():
         return jsonify({"status": "ok", "message": "SL Jobs AI backend is running"})
+
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(error):
+        if isinstance(error, HTTPException):
+            return error
+        print(f"[ERROR] {error}")
+        return jsonify({"error": "Internal server error. Check Render logs."}), 500
 
     # Route blueprints are optional during early setup.
     try:
