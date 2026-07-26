@@ -116,7 +116,15 @@ def get_jobs(
     limit=50,
     offset=0,
     exclude_sources=None,
+    match_category=True,
 ):
+    """Fetch jobs.
+
+    ``match_category=False`` skips the ``job_category`` column when keyword
+    searching. Portal categories are coarse buckets (e.g.
+    ``IT-Sware/DB/QA/Web/Graphics/GIS``) shared by unrelated roles, so a seed
+    like "web" otherwise pulls in every job in that bucket.
+    """
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -124,14 +132,23 @@ def get_jobs(
     params = []
 
     if keyword:
-        query += """
-            AND (
-                title LIKE ? OR description LIKE ? OR company LIKE ?
-                OR skills LIKE ? OR job_text LIKE ? OR job_category LIKE ?
-            )
-        """
         wildcard = f"%{keyword}%"
-        params.extend([wildcard, wildcard, wildcard, wildcard, wildcard, wildcard])
+        if match_category:
+            query += """
+                AND (
+                    title LIKE ? OR description LIKE ? OR company LIKE ?
+                    OR skills LIKE ? OR job_text LIKE ? OR job_category LIKE ?
+                )
+            """
+            params.extend([wildcard] * 6)
+        else:
+            query += """
+                AND (
+                    title LIKE ? OR description LIKE ? OR company LIKE ?
+                    OR skills LIKE ?
+                )
+            """
+            params.extend([wildcard] * 4)
 
     if location:
         query += " AND location LIKE ?"
@@ -221,7 +238,13 @@ def get_jobs_for_cv_ranking(
     selected = {}
     per_seed = max(25, limit // max(len(unique_seeds[:6]), 1))
     for seed in unique_seeds[:6]:
-        for row in get_jobs(keyword=seed, limit=per_seed, exclude_sources=exclude_sources):
+        rows = get_jobs(
+            keyword=seed,
+            limit=per_seed,
+            exclude_sources=exclude_sources,
+            match_category=False,
+        )
+        for row in rows:
             selected[row["id"]] = row
             if len(selected) >= limit:
                 return list(selected.values())[:limit]

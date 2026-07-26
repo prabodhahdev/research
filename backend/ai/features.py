@@ -13,6 +13,7 @@ from rank_bm25 import BM25Okapi
 
 from ai.cv_parser import extract_field, extract_skills_from_cv_text
 from ai.experience_rules import EXPERIENCE_RULES
+from ai.field_rules import FIELD_RULES
 from ai.text_preprocess import clean_job_text
 
 FEATURE_NAMES = (
@@ -54,6 +55,8 @@ _YEARS_RE = re.compile(r"(\d+)\+?\s*(?:years?|yrs?)", re.I)
 
 _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CACHE_PATH = os.path.join(_BACKEND_DIR, "data", "vectors", "job_sbert_cache.joblib")
+# Bump when cached job rows change meaning (e.g. how `_resolved_field` is derived).
+_CACHE_VERSION = 2
 MAX_INDEX_JOBS = int(os.environ.get("MAX_INDEX_JOBS", "5500"))
 DEFAULT_SBERT_K = int(os.environ.get("SBERT_K", "40"))
 DEFAULT_BM25_K = int(os.environ.get("BM25_K", "40"))
@@ -137,9 +140,12 @@ def skill_overlap_score(cv_skills: Sequence[str], job_row: Dict[str, Any]) -> fl
     if not job_skills and job_row.get("_inferred_skills"):
         job_skills = set(s.lower() for s in job_row["_inferred_skills"])
 
+    # ``job_category`` is excluded: portal buckets such as
+    # "IT-Sware/DB/QA/Web/Graphics/GIS" would falsely match CV skills like
+    # "web" or "qa" on jobs that are not actually in that role.
     job_blob = " ".join(
         str(job_row.get(key) or "")
-        for key in ("title", "job_category", "skills", "description", "job_text")
+        for key in ("title", "skills", "description", "job_text")
     ).lower()
 
     matched = 0
@@ -171,11 +177,25 @@ def build_job_document(row: Dict[str, Any]) -> str:
     ).strip()
 
 
+def _is_portal_bucket(value: str) -> bool:
+    """True for coarse portal categories that group unrelated roles together.
+
+    e.g. "IT-Sware/DB/QA/Web/Graphics/GIS" holds everything from developers to
+    a Textile lecturer, so it cannot be trusted as the job's actual field.
+    """
+    raw = value.strip().lower()
+    if not raw:
+        return True
+    if raw in FIELD_ALIASES or raw in FIELD_RULES:
+        return False
+    return "/" in raw or raw.count("&") > 1 or raw.count(",") > 1
+
+
 def resolve_job_field(row: Dict[str, Any]) -> str:
-    """Use stored category when present; otherwise infer from title/description."""
-    stored = row.get("job_category") or row.get("category")
-    if stored and str(stored).strip():
-        return str(stored).strip()
+    """Prefer a trustworthy stored category; otherwise infer from title/description."""
+    stored = str(row.get("job_category") or row.get("category") or "").strip()
+    if stored and not _is_portal_bucket(stored):
+        return stored
     title = str(row.get("title") or "")
     blob = build_job_document(row)
     return extract_field(blob, title) or ""
@@ -272,6 +292,8 @@ class JobRetrievalIndex:
             return False
         try:
             payload = joblib.load(_CACHE_PATH)
+            if payload.get("version") != _CACHE_VERSION:
+                return False
             if tuple(payload.get("job_ids", [])) != signature:
                 return False
             self._job_ids = list(payload["job_ids"])
@@ -290,6 +312,7 @@ class JobRetrievalIndex:
             os.makedirs(os.path.dirname(_CACHE_PATH), exist_ok=True)
             joblib.dump(
                 {
+                    "version": _CACHE_VERSION,
                     "job_ids": self._job_ids,
                     "job_rows": self._job_rows,
                     "bm25_docs": self._bm25_docs,
