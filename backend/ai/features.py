@@ -56,7 +56,7 @@ _YEARS_RE = re.compile(r"(\d+)\+?\s*(?:years?|yrs?)", re.I)
 _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CACHE_PATH = os.path.join(_BACKEND_DIR, "data", "vectors", "job_sbert_cache.joblib")
 # Bump when cached job rows change meaning (e.g. how `_resolved_field` is derived).
-_CACHE_VERSION = 2
+_CACHE_VERSION = 3
 MAX_INDEX_JOBS = int(os.environ.get("MAX_INDEX_JOBS", "5500"))
 DEFAULT_SBERT_K = int(os.environ.get("SBERT_K", "40"))
 DEFAULT_BM25_K = int(os.environ.get("BM25_K", "40"))
@@ -158,46 +158,74 @@ def skill_overlap_score(cv_skills: Sequence[str], job_row: Dict[str, Any]) -> fl
     return matched / max(1, len(cv_skills))
 
 
-def build_job_document(row: Dict[str, Any]) -> str:
-    job_text = row.get("job_text")
-    if job_text and str(job_text).strip():
-        return str(job_text).strip()
-    return " ".join(
-        str(row.get(key) or "")
-        for key in (
-            "title",
-            "job_category",
-            "experience",
-            "skills",
-            "description",
-            "company",
-            "location",
-        )
-        if row.get(key)
-    ).strip()
-
-
 def _is_portal_bucket(value: str) -> bool:
     """True for coarse portal categories that group unrelated roles together.
 
     e.g. "IT-Sware/DB/QA/Web/Graphics/GIS" holds everything from developers to
     a Textile lecturer, so it cannot be trusted as the job's actual field.
+    Prefer ``FIELD_RULES`` / ``extract_field`` instead.
     """
     raw = value.strip().lower()
     if not raw:
         return True
-    if raw in FIELD_ALIASES or raw in FIELD_RULES:
+    if raw in FIELD_ALIASES:
+        return False
+    rule_keys = {name.strip().lower() for name in FIELD_RULES}
+    if raw in rule_keys:
         return False
     return "/" in raw or raw.count("&") > 1 or raw.count(",") > 1
 
 
+def build_job_document(row: Dict[str, Any]) -> str:
+    """Build the text used for BM25/SBERT — aligned with research job text.
+
+    Portal mega-categories are excluded so tokens like ``Web`` inside
+    ``IT-Sware/DB/QA/Web/...`` do not falsely retrieve unrelated jobs.
+    """
+    job_text = row.get("job_text")
+    if job_text and str(job_text).strip():
+        return str(job_text).strip()
+
+    parts: List[str] = []
+    for key in (
+        "title",
+        "job_category",
+        "experience",
+        "skills",
+        "description",
+        "company",
+        "location",
+    ):
+        value = row.get(key)
+        if not value:
+            continue
+        text = str(value).strip()
+        if not text:
+            continue
+        if key == "job_category" and _is_portal_bucket(text):
+            continue
+        parts.append(text)
+    return " ".join(parts).strip()
+
+
 def resolve_job_field(row: Dict[str, Any]) -> str:
-    """Prefer a trustworthy stored category; otherwise infer from title/description."""
+    """Resolve job field using research ``FIELD_RULES`` when portal labels are noisy.
+
+    Trusted labels (aliases / known FIELD_RULES names) are kept.
+    Portal buckets are ignored; field is inferred from title + job text via
+    the same rule-based ``extract_field`` used for CVs.
+    """
     stored = str(row.get("job_category") or row.get("category") or "").strip()
     if stored and not _is_portal_bucket(stored):
         return stored
     title = str(row.get("title") or "")
-    blob = build_job_document(row)
+    # Infer without feeding the noisy portal bucket back into the text.
+    blob_parts = [
+        str(row.get(key) or "")
+        for key in ("title", "skills", "description", "job_text", "company")
+        if row.get(key)
+    ]
+    blob = " ".join(blob_parts).strip()
     return extract_field(blob, title) or ""
 
 
