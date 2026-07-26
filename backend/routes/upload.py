@@ -8,11 +8,12 @@ from PyPDF2 import PdfReader
 
 from ai.cv_parser import parse_cv_text
 from ai.recommender import recommend_jobs_for_skills
-from database.models import get_jobs
+from database.models import get_jobs_for_cv_ranking
 
 upload_bp = Blueprint("upload", __name__)
 
-RANK_JOB_LIMIT = int(os.environ.get("RANK_JOB_LIMIT", "500"))
+# Full corpus ranking by default. Lower only via env if hosting is memory-constrained.
+RANK_JOB_LIMIT = int(os.environ.get("RANK_JOB_LIMIT", "5500"))
 ALLOWED_EXTENSIONS = {".pdf", ".docx"}
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
@@ -71,9 +72,10 @@ def upload_cv():
         skills = cv_profile["skills"]
         cv_field = cv_profile["field"]
 
-        jobs_rows = get_jobs(
-            keyword=None,
-            location=None,
+        jobs_rows = get_jobs_for_cv_ranking(
+            position=cv_profile.get("position"),
+            field=cv_field,
+            skills=skills,
             limit=RANK_JOB_LIMIT,
             exclude_sources=["manual"],
         )

@@ -158,3 +158,80 @@ def get_jobs(
     conn.close()
 
     return [dict(row) for row in rows]
+
+
+def get_jobs_for_cv_ranking(
+    *,
+    position=None,
+    field=None,
+    skills=None,
+    limit=100,
+    exclude_sources=None,
+):
+    """Build a ranking pool that includes CV-relevant jobs, not only newest rows.
+
+    Plain ``get_jobs(limit=N)`` uses ``ORDER BY id DESC``, so domain-specific roles
+    (e.g. Mechanical Engineer) can be missing while unrelated recent jobs dominate.
+    """
+    exclude_sources = exclude_sources or ["manual"]
+    skills = skills or []
+    seeds = []
+
+    position_text = str(position or "").strip()
+    if 3 <= len(position_text) <= 80:
+        seeds.append(position_text)
+
+    field_text = str(field or "").strip()
+    if field_text:
+        seeds.append(field_text)
+        lower = field_text.lower()
+        if "engineering" in lower:
+            seeds.extend(["mechanical engineer", "mechanical", "engineer", "engineering"])
+        if "it" in lower or "software" in lower:
+            seeds.extend(["software engineer", "developer", "software"])
+        if "accounting" in lower or "finance" in lower:
+            seeds.extend(["accountant", "finance"])
+        if "marketing" in lower or "sales" in lower:
+            seeds.extend(["marketing", "sales"])
+        if "design" in lower or "creative" in lower:
+            seeds.extend(["designer", "graphic"])
+        if "human resources" in lower:
+            seeds.extend(["hr", "human resources"])
+
+    # Prefer longer / role-like skills first.
+    for skill in sorted({str(s).strip() for s in skills if str(s).strip()}, key=len, reverse=True):
+        if len(skill) >= 4:
+            seeds.append(skill)
+        if len(seeds) >= 10:
+            break
+
+    # De-duplicate seeds (case-insensitive) while keeping order.
+    unique_seeds = []
+    seen_seeds = set()
+    for seed in seeds:
+        key = seed.lower()
+        if key in seen_seeds:
+            continue
+        seen_seeds.add(key)
+        unique_seeds.append(seed)
+
+    if not unique_seeds:
+        return get_jobs(limit=limit, exclude_sources=exclude_sources)
+
+    selected = {}
+    per_seed = max(25, limit // max(len(unique_seeds[:6]), 1))
+    for seed in unique_seeds[:6]:
+        for row in get_jobs(keyword=seed, limit=per_seed, exclude_sources=exclude_sources):
+            selected[row["id"]] = row
+            if len(selected) >= limit:
+                return list(selected.values())[:limit]
+
+    # Fill remaining slots with newest jobs for diversity.
+    if len(selected) < limit:
+        for row in get_jobs(limit=limit, exclude_sources=exclude_sources):
+            if row["id"] not in selected:
+                selected[row["id"]] = row
+            if len(selected) >= limit:
+                break
+
+    return list(selected.values())[:limit]

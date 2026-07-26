@@ -1,14 +1,14 @@
 from flask import Blueprint, jsonify, request
-
 import os
 
 from ai.cv_parser import parse_cv_text
 from ai.chatbot import generate_chat_reply
 from ai.recommender import recommend_jobs_for_skills
-from database.models import get_jobs
+from database.models import get_jobs_for_cv_ranking
 
 chat_bp = Blueprint("chat", __name__)
-RANK_JOB_LIMIT = int(os.environ.get("RANK_JOB_LIMIT", "500"))
+
+RANK_JOB_LIMIT = int(os.environ.get("RANK_JOB_LIMIT", "5500"))
 
 
 @chat_bp.post("/")
@@ -22,7 +22,13 @@ def chat():
     related_jobs = []
     if any(word in message.lower() for word in ("job", "jobs", "vacancy", "vacancies", "role")):
         cv_profile = parse_cv_text(message)
-        jobs_rows = get_jobs(keyword=None, location=None, limit=RANK_JOB_LIMIT, exclude_sources=["manual"])
+        jobs_rows = get_jobs_for_cv_ranking(
+            position=cv_profile.get("position"),
+            field=cv_profile.get("field"),
+            skills=cv_profile.get("skills") or [],
+            limit=RANK_JOB_LIMIT,
+            exclude_sources=["manual"],
+        )
         try:
             recommendations = recommend_jobs_for_skills(
                 skills=cv_profile["skills"],

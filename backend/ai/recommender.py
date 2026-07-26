@@ -64,8 +64,6 @@ def recommend_jobs_for_skills(
         cv_experience=cv_experience,
         cv_skills=skills,
         jobs=jobs,
-        sbert_k=40,
-        bm25_k=40,
     )
     if feature_matrix.size == 0:
         return []

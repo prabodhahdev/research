@@ -54,7 +54,9 @@ _YEARS_RE = re.compile(r"(\d+)\+?\s*(?:years?|yrs?)", re.I)
 
 _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CACHE_PATH = os.path.join(_BACKEND_DIR, "data", "vectors", "job_sbert_cache.joblib")
-MAX_INDEX_JOBS = int(os.environ.get("MAX_INDEX_JOBS", "500"))
+MAX_INDEX_JOBS = int(os.environ.get("MAX_INDEX_JOBS", "5500"))
+DEFAULT_SBERT_K = int(os.environ.get("SBERT_K", "40"))
+DEFAULT_BM25_K = int(os.environ.get("BM25_K", "40"))
 
 
 def normalize_field(value: Optional[str]) -> str:
@@ -193,6 +195,13 @@ def build_job_experience(row: Dict[str, Any]) -> str:
 
 @lru_cache(maxsize=1)
 def _load_sbert():
+    # Limit CPU threads so free-tier containers are less likely to OOM / thrash.
+    try:
+        import torch
+
+        torch.set_num_threads(1)
+    except Exception:
+        pass
     from sentence_transformers import SentenceTransformer
 
     return SentenceTransformer("all-MiniLM-L6-v2")
@@ -419,11 +428,16 @@ def build_feature_matrix(
     cv_experience: Optional[str],
     cv_skills: Sequence[str],
     jobs: List[Dict[str, Any]],
-    sbert_k: int = 40,
-    bm25_k: int = 40,
+    sbert_k: Optional[int] = None,
+    bm25_k: Optional[int] = None,
 ) -> Tuple[List[Dict[str, Any]], np.ndarray, List[Dict[str, float]]]:
     if not jobs:
         return [], np.empty((0, 5)), []
+
+    if sbert_k is None:
+        sbert_k = DEFAULT_SBERT_K
+    if bm25_k is None:
+        bm25_k = DEFAULT_BM25_K
 
     _INDEX.build(jobs)
 
