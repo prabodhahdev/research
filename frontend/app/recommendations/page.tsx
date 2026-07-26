@@ -80,25 +80,25 @@ export default function RecommendationsPage() {
     : "";
 
   return (
-    <main className="bg-[#F3F2EF]">
-      <div className="mx-auto max-w-6xl px-4 py-8">
+    <main className="bg-[#F3F2EF] overflow-x-hidden">
+      <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-4 sm:py-8">
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-extrabold text-slate-900">
+        <div className="mb-5 sm:mb-6">
+          <h1 className="text-xl font-extrabold text-slate-900 sm:text-2xl">
             Job Recommendations
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 leading-6">
             Hybrid NLP job matches based on your CV skills and experience
           </p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-4">
+        <div className="grid gap-4 sm:gap-5 lg:grid-cols-4">
 
-          <div className="space-y-4 lg:col-span-1">
+          <div className="order-2 space-y-4 min-w-0 lg:order-1 lg:col-span-1">
 
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 sm:p-5">
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0A66C2]">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#0A66C2]">
                   <Upload size={15} className="text-white" />
                 </div>
                 <h2 className="text-sm font-bold text-blue-900">
@@ -112,16 +112,16 @@ export default function RecommendationsPage() {
               </p>
               <Link
                 href="/upload-cv"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0A66C2] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#004182] transition-colors"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#0A66C2] px-3 py-2.5 text-sm font-semibold text-white hover:bg-[#004182] transition-colors"
               >
-                <Upload size={13} />
+                <Upload size={13} className="flex-shrink-0" />
                 Upload Your CV
-                <ArrowRight size={13} />
+                <ArrowRight size={13} className="flex-shrink-0" />
               </Link>
             </div>
 
             {stored && stored.skills.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+              <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5">
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">
                   Skills from your CV
                 </h2>
@@ -129,7 +129,7 @@ export default function RecommendationsPage() {
                   {stored.skills.slice(0, 24).map((s) => (
                     <span
                       key={s}
-                      className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm font-medium text-slate-700"
+                      className="max-w-full break-words rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-sm font-medium text-slate-700"
                     >
                       {s}
                     </span>
@@ -143,7 +143,7 @@ export default function RecommendationsPage() {
               </div>
             )}
 
-            <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 sm:p-5">
               <div className="flex items-center gap-2 mb-4">
                 <BookOpen size={14} className="text-[#0A66C2]" />
                 <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
@@ -182,7 +182,7 @@ export default function RecommendationsPage() {
 
           </div>
 
-          <div className="lg:col-span-3 space-y-4">
+          <div className="order-1 min-w-0 space-y-4 lg:order-2 lg:col-span-3">
 
             {!hydrated && (
               <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-20 shadow-sm">
@@ -215,16 +215,16 @@ export default function RecommendationsPage() {
                   subtitle={`${Math.min(stored.recommendations.length, 20)} picks from your latest upload`}
                   className="border-green-100"
                 />
-                <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6 text-center">
+                <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 text-center sm:p-6">
                   <Upload size={24} className="mx-auto text-[#0A66C2] mb-2" />
-                  <p className="text-sm text-slate-600 mb-4">
+                  <p className="text-sm text-slate-600 mb-4 leading-6">
                     Upload again anytime to refresh against the imported research dataset.
                   </p>
                   <Link
                     href="/upload-cv"
-                    className="inline-flex items-center gap-2 rounded-full bg-[#0A66C2] px-6 py-2 text-sm font-semibold text-white hover:bg-[#004182] transition-colors"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0A66C2] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#004182] transition-colors sm:w-auto sm:py-2"
                   >
-                    <Upload size={14} />
+                    <Upload size={14} className="flex-shrink-0" />
                     Upload CV again
                   </Link>
                 </div>
@@ -252,13 +252,13 @@ export default function RecommendationsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Trophy size={16} className="text-[#0A66C2]" />
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Trophy size={16} className="text-[#0A66C2] flex-shrink-0" />
                     <h2 className="text-sm font-bold text-slate-800">
                       Sample job matches (demo)
                     </h2>
-                    <span className="rounded-full bg-[#0A66C2] px-2 py-0.5 text-sm font-bold text-white">
+                    <span className="flex-shrink-0 rounded-full bg-[#0A66C2] px-2 py-0.5 text-sm font-bold text-white">
                       {MOCK_RECOMMENDATIONS.length}
                     </span>
                   </div>
@@ -266,7 +266,7 @@ export default function RecommendationsPage() {
                     href="/upload-cv"
                     className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0A66C2] hover:underline"
                   >
-                    <Upload size={12} />
+                    <Upload size={12} className="flex-shrink-0" />
                     Upload CV for real results
                   </Link>
                 </div>
@@ -276,26 +276,26 @@ export default function RecommendationsPage() {
                     key={rec.rank}
                     className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden"
                   >
-                    <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3 bg-slate-50">
+                    <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 bg-slate-50 sm:px-5">
                       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0A66C2] text-sm font-bold text-white">
                         #{rec.rank}
                       </div>
                     </div>
-                    <div className="p-5">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex gap-3">
+                    <div className="p-4 sm:p-5">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                        <div className="flex gap-3 min-w-0">
                           <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#EEF3F8] text-base font-bold text-[#0A66C2] border border-blue-100">
                             {rec.job.company.charAt(0)}
                           </div>
-                          <div>
-                            <h3 className="text-base font-bold text-slate-900">{rec.job.title}</h3>
-                            <div className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-600">
-                              <Building2 size={12} className="text-slate-400" />
-                              <span className="font-medium">{rec.job.company}</span>
+                          <div className="min-w-0">
+                            <h3 className="text-base font-bold text-slate-900 break-words">{rec.job.title}</h3>
+                            <div className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-600 min-w-0">
+                              <Building2 size={12} className="text-slate-400 flex-shrink-0" />
+                              <span className="font-medium truncate">{rec.job.company}</span>
                             </div>
-                            <div className="mt-0.5 flex items-center gap-3 text-sm text-slate-500">
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500 sm:gap-3">
                               <span className="flex items-center gap-1">
-                                <MapPin size={11} className="text-slate-400" />
+                                <MapPin size={11} className="text-slate-400 flex-shrink-0" />
                                 {rec.job.location}
                               </span>
                               <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-sm font-medium text-blue-700">
@@ -304,26 +304,26 @@ export default function RecommendationsPage() {
                             </div>
                           </div>
                         </div>
-                        <span className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full border-2 border-slate-200 px-4 py-1.5 text-sm font-semibold text-slate-400">
+                        <span className="inline-flex w-full flex-shrink-0 items-center justify-center gap-1.5 rounded-full border-2 border-slate-200 px-4 py-2 text-sm font-semibold text-slate-400 sm:w-auto sm:py-1.5">
                           Easy Apply (demo)
-                          <ExternalLink size={11} />
+                          <ExternalLink size={11} className="flex-shrink-0" />
                         </span>
                       </div>
                     </div>
                   </div>
                 ))}
 
-                <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6 text-center">
+                <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 text-center sm:p-6">
                   <Trophy size={28} className="mx-auto text-[#0A66C2] mb-3" />
                   <h3 className="text-sm font-bold text-slate-800 mb-1">See your real job matches</h3>
-                  <p className="text-sm text-slate-500 mb-4">
+                  <p className="text-sm text-slate-500 mb-4 leading-6">
                     Upload your CV and get personalized recommendations from the imported research dataset, rule-based parser, and hybrid NLP recommendation model.
                   </p>
                   <Link
                     href="/upload-cv"
-                    className="inline-flex items-center gap-2 rounded-full bg-[#0A66C2] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#004182] transition-colors"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0A66C2] px-6 py-3 text-sm font-semibold text-white hover:bg-[#004182] transition-colors sm:w-auto sm:py-2.5"
                   >
-                    <Upload size={14} />
+                    <Upload size={14} className="flex-shrink-0" />
                     Upload My CV Now
                   </Link>
                 </div>

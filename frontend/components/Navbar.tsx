@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Briefcase,
   Search,
   Upload,
   MessageSquare,
@@ -50,7 +49,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0A66C2]">
-            <Briefcase size={18} className="text-white" />
+            <Search size={18} className="text-white" />
           </div>
           <span className="text-lg sm:text-xl font-bold text-[#0A66C2] tracking-tight">
             SL Jobs AI

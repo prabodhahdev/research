@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
-import { Briefcase } from "lucide-react";
+import { Search } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 const inter = Inter({
@@ -11,9 +11,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SL Jobs AI — AI-Powered Job Platform for Sri Lanka",
+  title: "SL Jobs Search",
   description:
     "Research dataset and hybrid NLP recommendation system for Sri Lankan job seekers",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({
@@ -49,7 +52,7 @@ export default function RootLayout({
               <div className="max-w-xs">
                 <Link href="/" className="flex items-center gap-2.5 mb-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0A66C2]">
-                    <Briefcase size={18} className="text-white" />
+                    <Search size={18} className="text-white" />
                   </div>
                   <span className="text-xl font-bold text-[#0A66C2]">
                     SL Jobs AI
@@ -123,6 +126,13 @@ export default function RootLayout({
                       </li>
                     ))}
                   </ul>
+
+                  <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wider mt-5 mb-2">
+                    Supervisor
+                  </h4>
+                  <p className="text-sm text-slate-500">
+                    Prof. (Dr.) S. Vasanthapriyan
+                  </p>
                 </div>
               </div>
             </div>

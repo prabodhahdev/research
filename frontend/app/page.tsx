@@ -44,24 +44,24 @@ export default function Home() {
           </p>
 
           {/* buttons */}
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
               href="/jobs"
-              className="inline-flex items-center gap-2 rounded-full bg-[#0A66C2] px-6 py-2.5 text-base font-semibold text-white shadow hover:bg-[#004182] transition-all duration-200"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0A66C2] px-6 py-3 text-base font-semibold text-white shadow hover:bg-[#004182] transition-all duration-200 sm:w-auto sm:py-2.5"
             >
               <Search size={17} />
               Browse Jobs
             </Link>
             <Link
               href="/upload-cv"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[#0A66C2] px-6 py-2.5 text-base font-semibold text-[#0A66C2] hover:bg-blue-50 transition-all duration-200"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[#0A66C2] px-6 py-3 text-base font-semibold text-[#0A66C2] hover:bg-blue-50 transition-all duration-200 sm:w-auto sm:py-2.5"
             >
               <Upload size={17} />
               Upload CV
             </Link>
             <Link
               href="/chat"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-2.5 text-base font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-200"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-base font-semibold text-slate-700 hover:bg-slate-50 transition-all duration-200 sm:w-auto sm:py-2.5"
             >
               <MessageSquare size={17} />
               Career Chat
@@ -69,7 +69,7 @@ export default function Home() {
           </div>
 
           {/* stats row */}
-          <div className="mt-6 flex flex-wrap gap-6 border-t border-slate-100 pt-5">
+          <div className="mt-6 grid grid-cols-2 gap-4 border-t border-slate-100 pt-5 sm:flex sm:flex-wrap sm:gap-6">
             {[
               { label: "Imported Jobs", value: "5500+" },
               { label: "Dataset Sources", value: "5" },
